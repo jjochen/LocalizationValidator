@@ -13,7 +13,7 @@ struct ValidateLocalization: ParsableCommand {
     @Option(name: .shortAndLong, help: "Name of localizing function.")
     var function: String = "NSLocalizedString"
 
-    @Flag(help: "Verbose output.")
+    @Flag(name: .shortAndLong, help: "Verbose output.")
     var verbose = false
 
     mutating func run() throws {
