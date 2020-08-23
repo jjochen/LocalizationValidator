@@ -43,4 +43,17 @@ extension LocalizationValidatorTests {
         XCTAssertThrowsError(_ = try LocalizationValidator(sourcePath: testFolder.sourceFolder.path,
                                                            localizationPath: "/folder/does/not/exist"))
     }
+
+    func testLocalizationSearch() {
+        let contents = #""my_key"="some_value"\n"key_2"="value_2""#
+        do {
+            let file = try testFolder.sourceFile(withContents: contents)
+            let results = try validator.localizationKeys(inLocalizationFile: file)
+            let result = results["key_2"]
+            XCTAssertEqual(result?.key, "key_2")
+            XCTAssertEqual(result?.filePath, file.path)
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+    }
 }
