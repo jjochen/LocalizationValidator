@@ -11,13 +11,15 @@ struct ValidateLocalization: ParsableCommand {
     var localizationPath: String = "."
 
     @Option(name: .shortAndLong, help: "Name of localizing function.")
-    var function: String = "NSLocalizedString"
+    var function: String = LocalizationValidator.defaultLocalizationFunction
 
     @Flag(name: .shortAndLong, help: "Verbose output.")
     var verbose = false
 
     mutating func run() throws {
-        let validator = try LocalizationValidator()
+        let validator = try LocalizationValidator(sourcePath: sourcePath,
+                                                  localizationPath: localizationPath,
+                                                  functionName: function)
         var progressBar: ProgressBar?
         let progressBarConfiguration: [ProgressElementType] = [ProgressIndex(),
                                                                ProgressBarLine(barLength: 60),
