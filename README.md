@@ -3,7 +3,7 @@
 Validate Xcode Localization
 
 ```
-USAGE: validate-localization [--source-path <source-path>] [--localization-path <localization-path>] [--function <function>] [--unused]
+USAGE: validate-localization [--source-path <source-path>] [--localization-path <localization-path>] [--function <function>] [--type <type>]
 
 OPTIONS:
   -s, --source-path <source-path>
@@ -12,6 +12,6 @@ OPTIONS:
                           Path to localization files. (default: .)
   -f, --function <function>
                           Name of localizing function. (default: NSLocalizedString)
-  -u, --unused            Print unused localization keys.
+  -t, --type <type>       Validation type [unavailable, unused, dynamic]. (default: unavailable)
   -h, --help              Show help information.
 ```
