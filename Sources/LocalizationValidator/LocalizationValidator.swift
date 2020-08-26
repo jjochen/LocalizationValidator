@@ -94,7 +94,8 @@ internal extension LocalizationValidator {
             guard let keyRange = Range(match.range(at: 1), in: contents) else { return }
             let key = String(contents[keyRange])
             let path = file.path(relativeTo: currentDirectory)
-            let result = SearchResult(filePath: path, lineNumber: 0, key: key)
+            let line = lineNumber(forMatch: match, in: contents)
+            let result = SearchResult(filePath: path, lineNumber: line, key: key)
             results[key] = result
         }
         return results
@@ -120,11 +121,23 @@ internal extension LocalizationValidator {
         regularExpression.enumerateMatches(in: contents,
                                            options: [],
                                            range: fullRange) { match, _, _ in
-            guard match != nil else { return }
+            guard let match = match else { return }
             let path = file.path(relativeTo: currentDirectory)
-            let result = SearchResult(filePath: path, lineNumber: 0, key: nil)
+            let line = lineNumber(forMatch: match, in: contents)
+            let result = SearchResult(filePath: path, lineNumber: line, key: nil)
             results.append(result)
         }
         return results
+    }
+
+    func lineNumber(forMatch match: NSTextCheckingResult, in contents: String) -> Int {
+        let location = match.range.location
+        guard location > 0 else {
+            return 1
+        }
+        let index = contents.index(contents.startIndex, offsetBy: match.range.location)
+        let substring = contents.prefix(upTo: index)
+        let lines = substring.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+        return lines.count
     }
 }

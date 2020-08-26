@@ -45,14 +45,16 @@ extension LocalizationValidatorTests {
     }
 
     func testLocalizationSearch() {
-        let contents = #""my_key"="some_value"\n"key_2"="value_2""#
+        let strings = "\"my_key\"=\"some_value\"\n\"key_2\"=\"value_2\""
         do {
-            let file = try testFolder.createLocalizationFile(withContents: contents)
+            let file = try testFolder.createLocalizationFile(withContents: strings)
             let results = try validator.searchForAvailableLocalizations()
+            XCTAssertEqual(results.count, 2)
             let result = results["key_2"]
             XCTAssertNotNil(result)
             XCTAssertEqual(result?.key, "key_2")
             XCTAssertEqual(result?.filePath, file.path)
+            XCTAssertEqual(result?.lineNumber, 2)
         } catch {
             XCTFail(error.localizedDescription)
         }
@@ -82,6 +84,7 @@ extension LocalizationValidatorTests {
             XCTAssertNotNil(result)
             XCTAssertEqual(result?.key, "used_key_2")
             XCTAssertEqual(result?.filePath, file.path)
+            XCTAssertEqual(result?.lineNumber, 1)
         } catch {
             XCTFail(error.localizedDescription)
         }
@@ -97,13 +100,14 @@ extension LocalizationValidatorTests {
             XCTAssertNotNil(result)
             XCTAssertNil(result?.key)
             XCTAssertEqual(result?.filePath, file.path)
+            XCTAssertEqual(result?.lineNumber, 1)
         } catch {
             XCTFail(error.localizedDescription)
         }
     }
 
     func testUnavailableLocalizations() {
-        let strings = #""unused_key"="some_value"\n"used_key_2"="value""#
+        let strings = "\"unused_key\"=\"some_value\"\n\"used_key_2\"=\"value_2\""
         let source = #"NSString *mainTitle = (self.type == 1) ? NSLocalizedString(@"used_key_1", @"Notes") : NSLocalizedString(@"used_key_2", @"Favorites");"#
         do {
             let file = try testFolder.createSourceFile(withContents: source)
@@ -114,13 +118,14 @@ extension LocalizationValidatorTests {
             XCTAssertNotNil(result)
             XCTAssertEqual(result?.key, "used_key_1")
             XCTAssertEqual(result?.filePath, file.path)
+            XCTAssertEqual(result?.lineNumber, 1)
         } catch {
             XCTFail(error.localizedDescription)
         }
     }
 
     func testUnusedLocalizations() {
-        let strings = #""unused_key"="some_value"\n"used_key_2"="value""#
+        let strings = "\n\n\"unused_key\"=\"some_value\"\n\"used_key_2\"=\"value_2\""
         let source = #"NSString *mainTitle = (self.type == 1) ? NSLocalizedString(@"used_key_1", @"Notes") : NSLocalizedString(@"used_key_2", @"Favorites");"#
         do {
             try testFolder.createSourceFile(named: "Source.m", withContents: source)
@@ -131,6 +136,7 @@ extension LocalizationValidatorTests {
             XCTAssertNotNil(result)
             XCTAssertEqual(result?.key, "unused_key")
             XCTAssertEqual(result?.filePath, file.path)
+            XCTAssertEqual(result?.lineNumber, 3)
         } catch {
             XCTFail(error.localizedDescription)
         }
