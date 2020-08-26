@@ -28,18 +28,12 @@ let package = Package(
             url: "https://github.com/johnsundell/files",
             from: "4.0.0"
         ),
-        .package(
-            name: "Progress",
-            url: "https://github.com/jkandzi/Progress.swift",
-            from: "0.4.0"
-        ),
     ],
     targets: [
         .target(
             name: "ValidateLocalization",
             dependencies: [
                 "LocalizationValidator",
-                "Progress",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),

@@ -1,7 +1,13 @@
 import Foundation
 
-internal struct SearchResult {
+public struct SearchResult {
     let filePath: String
-    let line: Int
+    let lineNumber: Int
     let key: String
+}
+
+extension SearchResult: CustomStringConvertible {
+    public var description: String {
+        return "\(key): \(filePath):\(lineNumber)"
+    }
 }

@@ -13,12 +13,14 @@ struct TestFolder {
         localizationFolder = try folder.createSubfolder(at: "en.lproj")
     }
 
-    func localizationFile(named name: String = "Localization.strings", withContents contents: String) throws -> File {
+    @discardableResult
+    func createLocalizationFile(named name: String = "Localization.strings", withContents contents: String) throws -> File {
         let data = contents.data(using: .utf8)
         return try localizationFolder.createFile(named: name, contents: data)
     }
 
-    func sourceFile(named name: String = "Source.m", withContents contents: String) throws -> File {
+    @discardableResult
+    func createSourceFile(named name: String = "Source.m", withContents contents: String) throws -> File {
         let data = contents.data(using: .utf8)
         return try sourceFolder.createFile(named: name, contents: data)
     }
