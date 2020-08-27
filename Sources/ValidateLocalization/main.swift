@@ -49,7 +49,7 @@ struct ValidateLocalization: ParsableCommand {
             print("No unavailable localizations!")
             return
         }
-        print("Unavailable localizations:\n")
+        print("\n\(unavailable.count) unavailable localizations:\n")
         unavailable.forEach { _, searchResult in
             print(searchResult)
         }
@@ -61,7 +61,7 @@ struct ValidateLocalization: ParsableCommand {
             print("No unused localizations!")
             return
         }
-        print("Unused localizations:\n")
+        print("\n\(unused.count) unused localizations:\n")
         unused.forEach { key, _ in
             print(key)
         }
@@ -73,7 +73,7 @@ struct ValidateLocalization: ParsableCommand {
             print("No dynamic localizations!")
             return
         }
-        print("Dynamic localizations:\n")
+        print("\n\(dynamic.count) dynamic localizations:\n")
         dynamic.forEach { searchResult in
             print(searchResult)
         }
