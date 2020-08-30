@@ -3,15 +3,16 @@ import Foundation
 public struct SearchResult {
     let filePath: String
     let lineNumber: Int
+    let positionInLine: Int
     let key: String?
 }
 
 extension SearchResult: CustomStringConvertible {
     public var description: String {
-        let location = "\(filePath):\(lineNumber)"
+        let fileLocation = "\(filePath):\(lineNumber):\(positionInLine)"
         guard let key = key else {
-            return location
+            return fileLocation
         }
-        return "\(key): \(location)"
+        return "\(key): \(fileLocation)"
     }
 }

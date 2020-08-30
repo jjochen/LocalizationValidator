@@ -71,6 +71,16 @@ internal extension LocalizationValidator {
         return usedLocalizations
     }
 
+    func searchForAllLocalizations() throws -> [SearchResult] {
+        var localizations: [SearchResult] = []
+        try sourceFolder.files.recursive.forEach { file in
+            guard file.extension == "swift" || file.extension == "m" else { return }
+            let newLocalizations = try searchForAllLocalizations(inFile: file)
+            localizations.append(contentsOf: newLocalizations)
+        }
+        return localizations
+    }
+
     func searchForDynamicLocalizations() throws -> [SearchResult] {
         var dynamicLocalizations: [SearchResult] = []
         try sourceFolder.files.recursive.forEach { file in
@@ -96,6 +106,11 @@ internal extension LocalizationValidator {
         return try searchForLocalizations(inFile: file, pattern: pattern)
     }
 
+    func searchForAllLocalizations(inFile file: File) throws -> [SearchResult] {
+        let pattern = localizationFunctionName + #"\("#
+        return try searchForLocalizations(inFile: file, pattern: pattern)
+    }
+
     func searchForLocalizationKeys(inFile file: File, pattern: String) throws -> [String: SearchResult] {
         let contents = try file.readAsString(encodedAs: .utf8)
         let regularExpression = try NSRegularExpression(pattern: pattern)
@@ -105,12 +120,8 @@ internal extension LocalizationValidator {
         regularExpression.enumerateMatches(in: contents,
                                            options: [],
                                            range: fullRange) { match, _, _ in
-            guard let match = match, match.numberOfRanges > 1 else { return }
-            guard let keyRange = Range(match.range(at: 1), in: contents) else { return }
-            let key = String(contents[keyRange])
-            let path = file.path(relativeTo: currentDirectory)
-            let line = lineNumber(forMatch: match, in: contents)
-            let result = SearchResult(filePath: path, lineNumber: line, key: key)
+            guard let result = self.searchResult(inFile: file, forMatch: match, in: contents) else { return }
+            guard let key = result.key else { return }
             results[key] = result
         }
         return results
@@ -125,23 +136,22 @@ internal extension LocalizationValidator {
         regularExpression.enumerateMatches(in: contents,
                                            options: [],
                                            range: fullRange) { match, _, _ in
-            guard let match = match else { return }
-            let path = file.path(relativeTo: currentDirectory)
-            let line = lineNumber(forMatch: match, in: contents)
-            let result = SearchResult(filePath: path, lineNumber: line, key: nil)
+            guard let result = self.searchResult(inFile: file, forMatch: match, in: contents) else { return }
             results.append(result)
         }
         return results
     }
 
-    func lineNumber(forMatch match: NSTextCheckingResult, in contents: String) -> Int {
-        let location = match.range.location
-        guard location > 0 else {
-            return 1
-        }
-        let index = contents.index(contents.startIndex, offsetBy: match.range.location)
-        let substring = contents.prefix(upTo: index)
-        let lines = substring.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
-        return lines.count
+    func searchResult(inFile file: File, forMatch match: NSTextCheckingResult?, in contents: String) -> SearchResult? {
+        guard let match = match else { return nil }
+        let path = file.path(relativeTo: currentDirectory)
+        let key = contents.string(forRangeAt: 1, ofMatch: match)
+        let position = contents.filePosition(forMatch: match)
+        let result = SearchResult(filePath: path,
+                                  lineNumber: position.line,
+                                  positionInLine: position.positionInLine,
+                                  key: key)
+
+        return result
     }
 }
