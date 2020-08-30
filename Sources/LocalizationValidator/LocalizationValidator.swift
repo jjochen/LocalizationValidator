@@ -61,11 +61,6 @@ internal extension LocalizationValidator {
         return availableLocalizations
     }
 
-    func searchForAvailableLocalizations(inFile file: File) throws -> [String: SearchResult] {
-        let pattern = #""(\w+)"=""#
-        return try searchForLocalizations(inFile: file, pattern: pattern)
-    }
-
     func searchForUsedLocalizations() throws -> [String: SearchResult] {
         var usedLocalizations: [String: SearchResult] = [:]
         try sourceFolder.files.recursive.forEach { file in
@@ -76,12 +71,32 @@ internal extension LocalizationValidator {
         return usedLocalizations
     }
 
+    func searchForDynamicLocalizations() throws -> [SearchResult] {
+        var dynamicLocalizations: [SearchResult] = []
+        try sourceFolder.files.recursive.forEach { file in
+            guard file.extension == "swift" || file.extension == "m" else { return }
+            let newLocalizations = try searchForDynamicLocalizations(inFile: file)
+            dynamicLocalizations.append(contentsOf: newLocalizations)
+        }
+        return dynamicLocalizations
+    }
+
+    func searchForAvailableLocalizations(inFile file: File) throws -> [String: SearchResult] {
+        let pattern = #""(\w+)"=""#
+        return try searchForLocalizationKeys(inFile: file, pattern: pattern)
+    }
+
     func searchForUsedLocalizations(inFile file: File) throws -> [String: SearchResult] {
         let pattern = localizationFunctionName + #"\(@?"(\w+)","#
+        return try searchForLocalizationKeys(inFile: file, pattern: pattern)
+    }
+
+    func searchForDynamicLocalizations(inFile file: File) throws -> [SearchResult] {
+        let pattern = localizationFunctionName + #"\([^@"]"#
         return try searchForLocalizations(inFile: file, pattern: pattern)
     }
 
-    func searchForLocalizations(inFile file: File, pattern: String) throws -> [String: SearchResult] {
+    func searchForLocalizationKeys(inFile file: File, pattern: String) throws -> [String: SearchResult] {
         let contents = try file.readAsString(encodedAs: .utf8)
         let regularExpression = try NSRegularExpression(pattern: pattern)
         let fullRange = NSRange(contents.startIndex ..< contents.endIndex,
@@ -101,18 +116,7 @@ internal extension LocalizationValidator {
         return results
     }
 
-    func searchForDynamicLocalizations() throws -> [SearchResult] {
-        var dynamicLocalizations: [SearchResult] = []
-        try sourceFolder.files.recursive.forEach { file in
-            guard file.extension == "swift" || file.extension == "m" else { return }
-            let newLocalizations = try searchForDynamicLocalizations(inFile: file)
-            dynamicLocalizations.append(contentsOf: newLocalizations)
-        }
-        return dynamicLocalizations
-    }
-
-    func searchForDynamicLocalizations(inFile file: File) throws -> [SearchResult] {
-        let pattern = localizationFunctionName + #"\([^@"]"#
+    func searchForLocalizations(inFile file: File, pattern: String) throws -> [SearchResult] {
         let contents = try file.readAsString(encodedAs: .utf8)
         let regularExpression = try NSRegularExpression(pattern: pattern)
         let fullRange = NSRange(contents.startIndex ..< contents.endIndex,
