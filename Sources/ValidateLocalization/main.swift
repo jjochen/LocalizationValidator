@@ -74,7 +74,7 @@ struct ValidateLocalization: ParsableCommand {
             return
         }
         print("\n\(dynamic.count) dynamic localizations:\n")
-        dynamic.forEach { searchResult in
+        dynamic.forEach { _, searchResult in
             print(searchResult)
         }
     }

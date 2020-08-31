@@ -98,7 +98,7 @@ extension LocalizationValidatorTests {
             let file = try testFolder.createSourceFile(withContents: source)
             let results = try validator.searchForDynamicLocalizations()
             XCTAssertEqual(results.count, 1)
-            let result = results.first
+            let result = results.first?.value
             XCTAssertNotNil(result)
             XCTAssertNil(result?.key)
             XCTAssertEqual(result?.filePath, file.path)

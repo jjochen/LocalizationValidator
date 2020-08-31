@@ -22,8 +22,11 @@ internal extension SearchResult {
 }
 
 extension SearchResult: CustomStringConvertible {
+    public var fileLocation: String {
+        return "\(filePath):\(position.lineNumber):\(position.positionInLine)"
+    }
+
     public var description: String {
-        let fileLocation = "\(filePath):\(position.lineNumber):\(position.positionInLine)"
         guard let key = key else {
             return fileLocation
         }
