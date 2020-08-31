@@ -92,23 +92,6 @@ extension LocalizationValidatorTests {
         }
     }
 
-    func testDynamicKeySearch() {
-        let source = #"NSString *string = (self.type == 1) ? NSLocalizedString(@"used_key_1", @"Notes") : NSLocalizedString(myVariable, @"Favorites");"#
-        do {
-            let file = try testFolder.createSourceFile(withContents: source)
-            let results = try validator.searchForDynamicLocalizations(identifier: { $0.fileLocation })
-            XCTAssertEqual(results.count, 1)
-            let result = results.first?.value
-            XCTAssertNotNil(result)
-            XCTAssertNil(result?.key)
-            XCTAssertEqual(result?.filePath, file.path)
-            XCTAssertEqual(result?.position.lineNumber, 1)
-            XCTAssertEqual(result?.position.positionInLine, 84)
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-    }
-
     func testUnavailableLocalizations() {
         let strings = "\"unused_key\"=\"some_value\"\n\"used_key_2\"=\"value_2\""
         let source = #"NSString *mainTitle = (self.type == 1) ? NSLocalizedString(@"used_key_1", @"Notes") : NSLocalizedString(@"used_key_2", @"Favorites");"#
@@ -142,6 +125,25 @@ extension LocalizationValidatorTests {
             XCTAssertEqual(result?.filePath, file.path)
             XCTAssertEqual(result?.position.lineNumber, 3)
             XCTAssertEqual(result?.position.positionInLine, 2)
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+    }
+
+    func testDynamicLocalizations() {
+        let strings = "\n\n \"unused_key\"=\"some_value\"\n \"used_key_2\"=\"value_2\""
+        let source = #"NSString *mainTitle = (self.type == 1) ? NSLocalizedString(@"used_key_1", @"Notes") : NSLocalizedString(@"test test", @"Favorites");"#
+        do {
+            let file = try testFolder.createSourceFile(withContents: source)
+            try testFolder.createLocalizationFile(withContents: strings)
+            let results = try validator.dynamicLocalizations()
+            XCTAssertEqual(results.count, 1)
+            let result = results.first?.value
+            XCTAssertNotNil(result)
+            XCTAssertNil(result?.key)
+            XCTAssertEqual(result?.filePath, file.path)
+            XCTAssertEqual(result?.position.lineNumber, 1)
+            XCTAssertEqual(result?.position.positionInLine, 87)
         } catch {
             XCTFail(error.localizedDescription)
         }

@@ -20,34 +20,34 @@ public struct LocalizationValidator {
 
     public func unusedLocalizations() throws -> [String: SearchResult] {
         let identifier: SearchResultIdentifier = { result in result.key }
-        return try remove(fileSearch: searchForUsedLocalizations, from: searchForAvailableLocalizations, identifier: identifier)
+        return try remove(resultsFromSearch: searchForUsedLocalizations,
+                          from: searchForAvailableLocalizations,
+                          resultIdentifier: identifier)
     }
 
     public func unavailableLocalizations() throws -> [String: SearchResult] {
         let identifier: SearchResultIdentifier = { result in result.key }
-        return try remove(fileSearch: searchForAvailableLocalizations, from: searchForUsedLocalizations, identifier: identifier)
+        return try remove(resultsFromSearch: searchForAvailableLocalizations,
+                          from: searchForUsedLocalizations,
+                          resultIdentifier: identifier)
     }
 
     public func dynamicLocalizations() throws -> [String: SearchResult] {
         let identifier: SearchResultIdentifier = { result in result.fileLocation }
-        return try remove(fileSearch: searchForUsedLocalizations, from: searchForAllLocalizations, identifier: identifier)
-    }
-}
-
-internal extension Dictionary {
-    @inlinable mutating func removeValues(forKeys keys: Dictionary.Keys) {
-        keys.forEach { key in
-            self.removeValue(forKey: key)
-        }
+        return try remove(resultsFromSearch: searchForUsedLocalizations,
+                          from: searchForAllLocalizations,
+                          resultIdentifier: identifier)
     }
 }
 
 internal extension LocalizationValidator {
     typealias FileSearch = (SearchResultIdentifier) throws -> [String: SearchResult]
 
-    func remove(fileSearch search1: FileSearch, from search2: FileSearch, identifier: @escaping SearchResultIdentifier) throws -> [String: SearchResult] {
-        var results = try search2(identifier)
-        let keys = try search1(identifier).keys
+    func remove(resultsFromSearch search1: FileSearch,
+                from search2: FileSearch,
+                resultIdentifier: @escaping SearchResultIdentifier) throws -> [String: SearchResult] {
+        var results = try search2(resultIdentifier)
+        let keys = try search1(resultIdentifier).keys
         results.removeValues(forKeys: keys)
         return results
     }
@@ -55,28 +55,18 @@ internal extension LocalizationValidator {
     func searchForAvailableLocalizations(identifier: SearchResultIdentifier) throws -> [String: SearchResult] {
         let pattern = #""(\w+)"=""#
         let filter = ["strings"]
-
         return try search(folder: localizationFolder, filter: filter, pattern: pattern, identifier: identifier)
     }
 
     func searchForUsedLocalizations(identifier: SearchResultIdentifier) throws -> [String: SearchResult] {
         let pattern = localizationFunctionName + #"\(@?"(\w+)","#
         let filter = ["swift", "m"]
-
         return try search(folder: sourceFolder, filter: filter, pattern: pattern, identifier: identifier)
     }
 
     func searchForAllLocalizations(identifier: SearchResultIdentifier) throws -> [String: SearchResult] {
         let pattern = localizationFunctionName + #"\("#
         let filter = ["swift", "m"]
-
-        return try search(folder: sourceFolder, filter: filter, pattern: pattern, identifier: identifier)
-    }
-
-    func searchForDynamicLocalizations(identifier: SearchResultIdentifier) throws -> [String: SearchResult] {
-        let pattern = localizationFunctionName + #"\([^@"]"#
-        let filter = ["swift", "m"]
-
         return try search(folder: sourceFolder, filter: filter, pattern: pattern, identifier: identifier)
     }
 }
@@ -116,7 +106,9 @@ internal extension LocalizationValidator {
         return results
     }
 
-    func searchResult(forMatch match: NSTextCheckingResult?, inFile file: File, withContents contents: String) -> SearchResult? {
+    func searchResult(forMatch match: NSTextCheckingResult?,
+                      inFile file: File,
+                      withContents contents: String) -> SearchResult? {
         let path = file.path(relativeTo: currentDirectory)
         return SearchResult(forMatch: match, inFileAt: path, withContents: contents)
     }
