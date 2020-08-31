@@ -120,7 +120,7 @@ internal extension LocalizationValidator {
         regularExpression.enumerateMatches(in: contents,
                                            options: [],
                                            range: fullRange) { match, _, _ in
-            guard let result = self.searchResult(inFile: file, forMatch: match, in: contents) else { return }
+            guard let result = self.searchResult(forMatch: match, inFile: file, withContents: contents) else { return }
             guard let key = result.key else { return }
             results[key] = result
         }
@@ -136,22 +136,14 @@ internal extension LocalizationValidator {
         regularExpression.enumerateMatches(in: contents,
                                            options: [],
                                            range: fullRange) { match, _, _ in
-            guard let result = self.searchResult(inFile: file, forMatch: match, in: contents) else { return }
+            guard let result = self.searchResult(forMatch: match, inFile: file, withContents: contents) else { return }
             results.append(result)
         }
         return results
     }
 
-    func searchResult(inFile file: File, forMatch match: NSTextCheckingResult?, in contents: String) -> SearchResult? {
-        guard let match = match else { return nil }
+    func searchResult(forMatch match: NSTextCheckingResult?, inFile file: File, withContents contents: String) -> SearchResult? {
         let path = file.path(relativeTo: currentDirectory)
-        let key = contents.string(forRangeAt: 1, ofMatch: match)
-        let position = contents.filePosition(forMatch: match)
-        let result = SearchResult(filePath: path,
-                                  lineNumber: position.line,
-                                  positionInLine: position.positionInLine,
-                                  key: key)
-
-        return result
+        return SearchResult(forMatch: match, inFileAt: path, withContents: contents)
     }
 }
