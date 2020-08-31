@@ -19,15 +19,18 @@ public struct LocalizationValidator {
     }
 
     public func unusedLocalizations() throws -> [String: SearchResult] {
-        return try remove(fileSearch: searchForUsedLocalizations, from: searchForAvailableLocalizations)
+        let identifier: SearchResultIdentifier = { result in result.key }
+        return try remove(fileSearch: searchForUsedLocalizations, from: searchForAvailableLocalizations, identifier: identifier)
     }
 
     public func unavailableLocalizations() throws -> [String: SearchResult] {
-        return try remove(fileSearch: searchForAvailableLocalizations, from: searchForUsedLocalizations)
+        let identifier: SearchResultIdentifier = { result in result.key }
+        return try remove(fileSearch: searchForAvailableLocalizations, from: searchForUsedLocalizations, identifier: identifier)
     }
 
     public func dynamicLocalizations() throws -> [String: SearchResult] {
-        return try remove(fileSearch: searchForUsedLocalizations, from: searchForAllLocalizations)
+        let identifier: SearchResultIdentifier = { result in result.fileLocation }
+        return try remove(fileSearch: searchForUsedLocalizations, from: searchForAllLocalizations, identifier: identifier)
     }
 }
 
@@ -40,43 +43,39 @@ internal extension Dictionary {
 }
 
 internal extension LocalizationValidator {
-    typealias FileSearch = () throws -> [String: SearchResult]
+    typealias FileSearch = (SearchResultIdentifier) throws -> [String: SearchResult]
 
-    func remove(fileSearch search1: FileSearch, from search2: FileSearch) throws -> [String: SearchResult] {
-        var results = try search2()
-        let keys = try search1().keys
+    func remove(fileSearch search1: FileSearch, from search2: FileSearch, identifier: @escaping SearchResultIdentifier) throws -> [String: SearchResult] {
+        var results = try search2(identifier)
+        let keys = try search1(identifier).keys
         results.removeValues(forKeys: keys)
         return results
     }
 
-    func searchForAvailableLocalizations() throws -> [String: SearchResult] {
+    func searchForAvailableLocalizations(identifier: SearchResultIdentifier) throws -> [String: SearchResult] {
         let pattern = #""(\w+)"=""#
         let filter = ["strings"]
-        let identifier: SearchResultIdentifier = { result in result.key }
 
         return try search(folder: localizationFolder, filter: filter, pattern: pattern, identifier: identifier)
     }
 
-    func searchForUsedLocalizations() throws -> [String: SearchResult] {
+    func searchForUsedLocalizations(identifier: SearchResultIdentifier) throws -> [String: SearchResult] {
         let pattern = localizationFunctionName + #"\(@?"(\w+)","#
         let filter = ["swift", "m"]
-        let identifier: SearchResultIdentifier = { result in result.key }
 
         return try search(folder: sourceFolder, filter: filter, pattern: pattern, identifier: identifier)
     }
 
-    func searchForAllLocalizations() throws -> [String: SearchResult] {
+    func searchForAllLocalizations(identifier: SearchResultIdentifier) throws -> [String: SearchResult] {
         let pattern = localizationFunctionName + #"\("#
         let filter = ["swift", "m"]
-        let identifier: SearchResultIdentifier = { result in result.fileLocation }
 
         return try search(folder: sourceFolder, filter: filter, pattern: pattern, identifier: identifier)
     }
 
-    func searchForDynamicLocalizations() throws -> [String: SearchResult] {
+    func searchForDynamicLocalizations(identifier: SearchResultIdentifier) throws -> [String: SearchResult] {
         let pattern = localizationFunctionName + #"\([^@"]"#
         let filter = ["swift", "m"]
-        let identifier: SearchResultIdentifier = { result in result.fileLocation }
 
         return try search(folder: sourceFolder, filter: filter, pattern: pattern, identifier: identifier)
     }

@@ -48,7 +48,7 @@ extension LocalizationValidatorTests {
         let strings = "\"my_key\"=\"some_value\"\n\"key_2\"=\"value_2\""
         do {
             let file = try testFolder.createLocalizationFile(withContents: strings)
-            let results = try validator.searchForAvailableLocalizations()
+            let results = try validator.searchForAvailableLocalizations(identifier: { $0.key })
             XCTAssertEqual(results.count, 2)
             let result = results["key_2"]
             XCTAssertNotNil(result)
@@ -65,7 +65,7 @@ extension LocalizationValidatorTests {
         let contents = #"let string = NSLocalizedString("swift_key", comment: "")"#
         do {
             let file = try testFolder.createSourceFile(named: "Source.swift", withContents: contents)
-            let results = try validator.searchForUsedLocalizations()
+            let results = try validator.searchForUsedLocalizations(identifier: { $0.key })
             let result = results["swift_key"]
             XCTAssertNotNil(result)
             XCTAssertEqual(result?.key, "swift_key")
@@ -79,7 +79,7 @@ extension LocalizationValidatorTests {
         let source = #"NSString *string = (self.type == 1) ? NSLocalizedString(@"used_key_1", @"Notes") : NSLocalizedString(@"used_key_2", @"Favorites");"#
         do {
             let file = try testFolder.createSourceFile(named: "Source.m", withContents: source)
-            let results = try validator.searchForUsedLocalizations()
+            let results = try validator.searchForUsedLocalizations(identifier: { $0.key })
             XCTAssertEqual(results.count, 2)
             let result = results["used_key_2"]
             XCTAssertNotNil(result)
@@ -96,7 +96,7 @@ extension LocalizationValidatorTests {
         let source = #"NSString *string = (self.type == 1) ? NSLocalizedString(@"used_key_1", @"Notes") : NSLocalizedString(myVariable, @"Favorites");"#
         do {
             let file = try testFolder.createSourceFile(withContents: source)
-            let results = try validator.searchForDynamicLocalizations()
+            let results = try validator.searchForDynamicLocalizations(identifier: { $0.fileLocation })
             XCTAssertEqual(results.count, 1)
             let result = results.first?.value
             XCTAssertNotNil(result)
